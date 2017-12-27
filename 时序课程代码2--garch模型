@@ -1,0 +1,59 @@
+
+##异方差检验：
+####R里有两种检验方法是常用的，LiMcLeod{portes}可以进行多元的Portmanteau Q检验。。。protest{portes}可以进行一元的Portmanteau Q检验，把函数中的参数SquaredQ=T还可以把序列平方之后再检验自相关性。。。也相当于进行了异方差检验。。。
+setwd("C:/data/")
+gkj<-read.table("C:/data/gkj.csv",header=T,sep=",")
+x<-ts(gkj,start = c(1963,4),frequency=12)
+plot(x)
+x.dif<-diff(x)
+plot(x.dif)
+plot(x.dif^2)
+lnx<-log(x)  #log(x,base=底数)
+plot(lnx)
+dif.lnx<-diff(lnx)
+plot(dif.lnx)
+for(i in 1:2) print(Box.test(dif.lnx,lag=6*i))
+###标普500月度收益率数据建模packages(tseries,rugarch)
+garch(x, order = c(p, q), series = NULL, control = garch.control(...), ...)
+bpgp<-read.table("C:/data/bpgp.csv",header=T,sep=",")
+x<-ts(bpgp,start = c(1926,1),frequency=12)
+plot(x)
+plot(x^2)
+###LM检验（packages“FinTS”）
+for(i in 1:5)
+print(ArchTest(x,lag=i))
+###Portmanteau Q检验
+for(i in 1:5)
+print(Box.test(x,lag=i))
+###拟合ARCH(3)模型
+x.fit<-garch(x,order=c(0,3))
+summary(x.fit)
+x.pred<-predict(x.fit)
+plot(x.pred)
+plot(x)
+lines(x.pred[,1],col=2)
+lines(x.pred[,2],col=4)
+abline(h=1.96*sd(x),col=4,lty=2)
+abline(h=-1.96*sd(x),col=4,lty=2)
+###日兑换率序列建模
+dhl<-read.table("C:/data/dhl.csv",header=T,sep=",")
+x<-ts(dhl$dhl,start = c(1979,12,31),frequency=365)
+plot(x)
+acf(diff(x))
+pacf(diff(x))
+for(i in 1:2) print(Box.test(diff(x),lag=6*i))
+###均值模型ARIMA(0,1,1)
+x.fit<-arima(x,order=c(0,1,1))
+x.fit
+length(x)   #计算自由度
+t=
+pt(t,df=length(x)-1,lower.tail=T)
+for(i in 1:6) print(Box.test(x.fit$residuals,type="Ljung-Box",lag=i))  #残差的白噪声检验
+x.fore<-forecast(x.fit,h=365)
+plot(x.fore)            # 均值（水平）预测
+for(i in 1:6) print(Box.test(x.fit$residuals^2,type="Ljung-Box",lag=i)) #条件异方差Q检验
+####方差模型GARCH(1,1)
+r.fit<-garch(x.fit$residuals,order=c(1,1))
+summary(r.fit)
+r.pred<-predict(r.fit)
+plot(r.pred)
