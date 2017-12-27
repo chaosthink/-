@@ -1,0 +1,103 @@
+####天然气CO2多元序列建模
+setwd("C:/data/")
+trqco2<-read.table("C:/data/trqco2.csv",header=T,sep=",")
+y<-ts(trqco2$CO2)
+plot(y)
+win.graph()
+par(mfrow=c(2,1))
+acf(y)
+pacf(y)
+fit<-arima(y,order=c(4,0,0))
+fit
+t=
+pt(t,df=length(y)-1,lower.tail=T)
+for(i in 1:2) print(Box.test(fit$residuals,lag=6*i))
+###考虑输入变量建立ARIMAX模型，packages(TSA)
+##arimax(y, order = c(0, 0, 0),  xreg = 输入变量名（不需要作转移函数变换）, include.mean = TRUE, xtransf=输入变量名（需要作转移函数变换）, transfer = 指定转移函数的模型阶数)
+fit1<-arimax(y, order = c(p, 0, q),  xreg = x)
+fit2<-arimax(y, order = c(p, 0, q),  xreg = data.frame(x1,x2))
+fit3<-arimax(y, order = c(p, 0, q),  xtransf=x, transfer=list(c(m,n)))
+fit4<-arimax(y, order = c(p, 0, q),  xtransf=data.frame(x1,x2), transfer=list(c(m1,n1),c(m2,n2)))
+fit5<-arimax(y, order = c(p, 0, q), xreg = x1, xtransf=x2, transfer=list(c(m,n)))##
+x<-ts(trqco2$Methane)
+win.graph()
+par(mfrow=c(1,1))
+ccf(y,x)
+fit1<-arimax(y, order = c(4, 0, 0), xtransf=x, transfer=list(c(2,1)))
+fit1    #ARMA(p,q)各系数情况：1-phi1*B-phi2*B^2-...-phip*B^p；1+theta1*B+theta2*B^2+...+thetaq*B^q
+###拟合差分后残差序列和提取趋势后残差序列的波动性
+e<-rnorm(1000)
+x<-filter(0.1+e,filter=1,method="recursive")
+plot(x)
+t<-c(1:1000)
+abline(lm(x~t),col=2)
+lm(x~t)
+###差分运算和线性拟合后残差序列比较
+r1<-diff(x)
+fit<-lm(x~t)
+r2<-ts(fit$residuals)
+c1<-min(r1,r2)
+c2<-max(r1,r2)
+plot(r1,ylim=c(c1,c2))
+lines(r2,col2)
+####拟合趋势平稳序列
+t<-c(1:1000)
+e<-rnorm(1000,0,10)
+x<-0.1*t+e
+x<-ts(x)
+plot(x)
+###考察差分后残差序列的波动范围
+plot(diff(x))
+abline(h=c(1.96*sd(diff(x)),-1.96*sd(diff(x)),col=2)
+####考察线性拟合后残差序列的波动范围
+fit<-lm(x~t)
+r<-ts(fit$residuals)
+plot(r)
+abline(1.96*sd(r),-1.96*sd(r),col=2)
+
+###收入对数序列x与消费支出对数序列y的单位根检验packages(fBasics,fUnitRoots)
+adfTest(x, lags = n, type = c("nc", "c", "ct"), title = NULL, description = NULL)
+lags=n=1,默认设置，进行DF检验；n>1进行ADF检验。type=“nc”，无常数均值，无趋势类型；type=“c”有常数均值，无趋势类型；type=“ct”有常数均值，又有趋势类型。
+urppTest(x, type = c("Z-alpha", "Z-tau"), model = c("constant", "trend"), lags = c("short", "long"), use.lag = NULL, doplot = TRUE)
+##R语言做单位根检验的几个方法：
+##一是用fUnitRoots包中的UnitrootTests()和adfTest()
+##二是用tseries包中的adf.test()和pp.test()
+##三是用ur.df{urca}进行ADF检验或者ur.pp{urca}进行PP检验
+setwd("C:/data/")
+srzc<-read.table("C:/data/srzc.csv",header=T,sep=",")
+x1<-ts(srzc$lnx,start = 1978)
+y1<-ts(srzc$lny,start = 1978)
+c1<-min(x1,y1)
+c2<-max(x1,y1)
+plot(x1,ylim=c(c1,c2))
+lines(y1,lty=2,col=2)
+adfTest(x1,lag=1,type="nc")   #对lnx进行DF检验(只能进行一阶检验)
+adfTest(x1,lag=1,type="c")
+adfTest(x1,lag=1,type="ct")
+adfTest(y1,lag=1,type="nc")   #对lny进行DF检验(只能进行一阶检验)
+adfTest(y1,lag=1,type="c")
+adfTest(y1,lag=1,type="ct")
+dx<-diff(x1)
+dy<-diff(y1)
+for(i in 1:3) print(adfTest(dx,lag=i,type="nc"))  #对lnx差分后序列进行ADF检验(可进行高阶阶检验)
+for(i in 1:3) print(adfTest(dx,lag=i,type="c"))
+for(i in 1:3) print(adfTest(dx,lag=i,type="ct"))
+for(i in 1:3) print(adfTest(dy,lag=i,type="nc"))  #对lny差分后序列进行ADF检验(可进行高阶阶检验)
+for(i in 1:3) print(adfTest(dy,lag=i,type="c"))
+for(i in 1:3) print(adfTest(dy,lag=i,type="ct"))
+urppTest(dx, type = "Z-tau", model = "constant",lags = "long", use.lag = NULL, doplot = TRUE)  #对lnx差分后序列进行PP检验(可进行高阶阶检验)
+urppTest(dx, type = "Z-tau", model = "constant",lags = "short", use.lag = NULL, doplot = TRUE)
+urppTest(dx, type = "Z-tau", model = "trend",lags = "long", use.lag = NULL, doplot = TRUE)
+urppTest(dx, type = "Z-tau", model = "trend",lags = "short", use.lag = NULL, doplot = TRUE)
+urppTest(dy, type = "Z-tau", model = "constant",lags = "long", use.lag = NULL, doplot = TRUE)  #对lny差分后序列进行PP检验(可进行高阶阶检验)
+urppTest(dy, type = "Z-tau", model = "constant",lags = "short", use.lag = NULL, doplot = TRUE)
+urppTest(dy, type = "Z-tau", model = "trend",lags = "long", use.lag = NULL, doplot = TRUE)
+urppTest(dy, type = "Z-tau", model = "trend",lags = "short", use.lag = NULL, doplot = TRUE)
+##协整检验
+y.fit<-lm(y1~x1)
+summary(y.fit)     #构造回归（可以改进回归模型）
+r<-ts(y.fit$residuals)
+for(i in 1:3) print(adfTest(r,lag=i,type = "nc"))    #残差单位根检验并确立长期均衡关系
+ECM<-y.fit$residuals[1:24]
+dify.fit<-lm(diff(y1)~0+diff(x1)+ECM)
+summary(dify.fit)    #构建误差修正模型
