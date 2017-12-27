@@ -1,0 +1,108 @@
+#@#差分运算(纱产量、民用车辆)
+diff(x,lag=步长（默认1）,differences=差分次数（默认1）)
+
+setwd("C:/data/")
+shacl<-read.table("C:/data/shacl.csv",header=T,sep=",")
+x<-ts(shacl$chanl,start = 1964)
+x.dif<-diff(x)
+plot(x.dif)
+mycl<-read.table("C:/data/qcyyl.csv",header=T,sep=",")
+x<-ts(mycl$qcyyl,start = 1950)
+plot(x)
+x.dif<-diff(x)
+plot(x.dif)
+x.dif2<-diff(x,1,2)
+plot(x.dif2)
+x<-arima.sim(n=1000,list(order=c(0,1,0)),sd=10) #随机游走生成过程
+plot(x)
+
+###ARIMA模型建模（国民收入数据）
+gmsr<-read.table("C:/data/gmsr.csv",header=T,sep=",")
+x<-ts(gmsr$ny,start = 1952)
+plot(x)
+x.dif<-diff(x)
+plot(x.dif)
+acf(x.dif)
+pacf(x.dif)
+fit<-arima(x,order=c(0,1,1))
+fit
+t=
+pt(t,df=35,lower.tail=T)
+for(i in 1:2) print(Box.test(fit$residuals,lag=6*i))
+fore<-forecast(fit,h=10)
+fore
+plot(fore)
+
+####疏系数模型建模（生育率数据）
+syl<-read.table("C:/data/syl.csv",header=T,sep=",")
+x<-ts(syl$syl,start = 1917)
+plot(x)
+x.dif<-diff(x)
+plot(x.dif)
+acf(x.dif)
+pacf(x.dif)
+fit<-arima(x,order=c(4,1,0),transform.pars=F,fixed=c(NA,0,0,NA)) #transform.pars表示参数满足平稳可逆条件的逻辑变量
+fit
+t1=
+t2=
+pt(t1,df=35,lower.tail=T)
+pt(t2,df=35,lower.tail=T)
+for(i in 1:2) print(Box.test(fit$residuals,lag=6*i))
+fore<-forecast(fit,h=5)
+fore
+plot(fore)
+
+####季节模型建模（失业率数据）
+arima(x, order = c(0L, 0L, 0L),seasonal = list(order = c(0L, 0L, 0L), period = NA))
+syel<-read.table("C:/data/syel.csv",header=T,sep=",")
+x<-ts(syel$syel,start =c(1962,1),frequency=4)
+plot(x)
+x.dif<-diff(diff(x),4)  #d阶差分ddif<-diff(x,1,d);再D阶S步差分Ddif<-diff(ddif,S,D)
+plot(x.dif)
+acf(x.dif)
+pacf(x.dif)
+fit<-arima(x,order=c(4,1,0),seasonal=list(order=c(0,1,0),period=4),transform.pars=F,fixed=c(NA,0,0,NA))
+fit
+t1=
+t2=
+pt(t1,df=35,lower.tail=T)
+pt(t2,df=35,lower.tail=T)
+for(i in 1:2) print(Box.test(fit$residuals,lag=6*i))
+fore<-forecast(fit,h=12)
+fore
+plot(fore)
+fit<-arima(x,order=c(4,1,0),seasonal=list(order=c(1,1,1),period=4),transform.pars=F,fixed=c(NA,0,0,NA))#乘积季节模型
+
+####残差自回归模型建模（国民收入数据）
+gmsr<-read.table("C:/data/gmsr.csv",header=T,sep=",")
+x<-ts(gmsr$ny,start = 1952)
+plot(x)
+n=dim(gmsr)[1]
+t<-c(1:37)
+fit<-lm(x~t)
+summary(fit)
+xlag<-x[2:37]
+x2<-x[1:36]
+fit1<-lm(x2~xlag)
+summary(fit1)
+fit<-ts(fit$fitted.value,start=1952)
+fit1<-ts(fit1$fitted.value,start=1952)
+plot(x,type="p",pch=8)
+lines(fit,col=2)
+lines(fit1,col=4)
+###残差自相关检验（packages：lmtest）
+dwtest(formula, order.by = NULL, alternative = c("greater", "two.sided", "less"), iterations = 15, exact = NULL, tol = 1e-10, data = list())
+order.by=自变量，（默认为回归情形下的不相关；若是延迟相关情形，则为dh检验）
+dwtest(fit) #ordwtest(lm(x~t))
+###模型拟合
+win.graph()
+par(mfrow=c(2,1))
+acf(fit$residuals)
+pacf(fit$residuals)
+r.fit<-arima(fit$residuals,order=c(2,0,0),include.mean=F) #拟合AR（2）模型
+r.fit
+t1=
+t2=
+pt(t1,df=35,lower.tail=T)
+pt(t2,df=35,lower.tail=T)
+for(i in 1:2) print(Box.test(r.fit$residuals,lag=6*i))
