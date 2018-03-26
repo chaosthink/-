@@ -1,0 +1,45 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+' Developed by Contextures Inc.
+' www.contextures.com
+Dim rngDV As Range
+Dim oldVal As String
+Dim newVal As String
+If Target.Count > 1 Then GoTo exitHandler
+
+On Error Resume Next
+Set rngDV = Cells.SpecialCells(xlCellTypeAllValidation)
+On Error GoTo exitHandler
+
+If rngDV Is Nothing Then GoTo exitHandler
+
+If Intersect(Target, rngDV) Is Nothing Then
+   'do nothing
+Else
+  Application.EnableEvents = False
+  newVal = Target.Value
+  Application.Undo
+  oldVal = Target.Value
+  Target.Value = newVal
+  If Target.Column = 5 Or 6 Or 8 Then
+    If oldVal = "" Then
+      'do nothing
+      Else
+      If newVal = "" Then
+      'do nothing
+      Else
+      Target.Value = oldVal _
+        & ", " & newVal
+'      NOTE: you can use a line break,
+'      instead of a comma
+'      Target.Value = oldVal _
+'        & Chr(10) & newVal
+      End If
+    End If
+  End If
+End If
+
+exitHandler:
+  Application.EnableEvents = True
+End Sub
+
+'      第23行可以选择多选的列，可无视合并单元格
