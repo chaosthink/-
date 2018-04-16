@@ -1,0 +1,26 @@
+###制作packages
+star<- function(x,y){
+
+  return(x+y)
+
+}
+
+#清空内存对象
+rm(list=ls())
+f<- function(x,y) x+y
+g<- function(x,y) x-y
+d<- data.frame(a=1,b=2)
+e<- rnorm(10000)
+
+package.skeleton(list=c('f','g','d','e'),name='mypkg')
+
+###配置文档地址
+#f.dataguru.cn/thread-115781-1-1.html
+
+#打包方式
+#运行cmd命令行
+#进入目录
+#cd xxx
+#运行打包目录
+#rcmd build MyPackage
+#rcmdINSTALL--build MyPackage #然后把包解压到library里面 就可以用library调用了
